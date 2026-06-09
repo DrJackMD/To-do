@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Task Manager" />
+<title>Task Manager</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css" />
+<style>
+/* ── THEME ─────────────────────────────────────────────────────── */
+:root {
+  --bg:        #ffffff;
+  --bg2:       #f5f5f4;
+  --bg3:       #eeeeec;
+  --text:      #1a1a18;
+  --text2:     #6b6b67;
+  --text3:     #a8a8a4;
+  --border:    #e2e2de;
+  --border2:   #d0d0cc;
+  --radius:    8px;
+  --radius-lg: 12px;
+  --shadow:    0 1px 3px rgba(0,0,0,.07);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:     #18181a;
+    --bg2:    #222224;
+    --bg3:    #2c2c2e;
+    --text:   #f0f0ee;
+    --text2:  #a0a09c;
+    --text3:  #606060;
+    --border: #333335;
+    --border2:#444446;
+  }
+}
+
+/* ── RESET ─────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:2rem}
+input,select,textarea,button{font-family:inherit;color:inherit}
+
+/* ── LAYOUT ────────────────────────────────────────────────────── */
+.container{max-width:780px;margin:0 auto;padding:0 1rem}
+
+/* ── HEADER ────────────────────────────────────────────────────── */
+.app-header{background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;padding:.75rem 0}
+.header-inner{display:flex;align-items:center;justify-content:space-between}
+.app-title{font-size:18px;font-weight:600;color:var(--text)}
+.header-actions{display:flex;gap:8px;align-items:center}
+.sync-status{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.sync-status.syncing{color:#378ADD}
+.sync-status.error{color:#A32D2D}
+.sync-status.ok{color:#1D9E75}
+
+/* ── BUTTONS ───────────────────────────────────────────────────── */
+.btn{font-size:13px;padding:6px 14px;border-radius:var(--radius);cursor:pointer;height:34px;display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border2);color:var(--text);transition:background .12s}
+.btn:hover{background:var(--bg2)}
+.btn:active{background:var(--bg3)}
+.btn.primary{background:#1a6ed4;border-color:#1a6ed4;color:#fff;font-weight:500}
+.btn.primary:hover{background:#1860bf}
+.btn.sm{height:28px;font-size:12px;padding:4px 10px}
+
+/* ── STATS ─────────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:1rem 0}
+.stat{background:var(--bg2);border-radius:var(--radius-lg);padding:.7rem .9rem;border:1px solid var(--border)}
+.stat-label{font-size:11px;color:var(--text2);margin-bottom:3px}
+.stat-val{font-size:22px;font-weight:600;color:var(--text)}
+@media(max-width:500px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* ── WINDOW BAR ────────────────────────────────────────────────── */
+.window-bar{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:.5rem 0 .75rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;align-items:center}
+.window-bar::-webkit-scrollbar{display:none}
+.win-btn{font-size:12px;padding:4px 12px;border-radius:100px;cursor:pointer;border:1px solid var(--border2);background:var(--bg);color:var(--text2);white-space:nowrap;transition:all .12s;flex-shrink:0}
+.win-btn:hover{background:var(--bg2)}
+.win-btn.active{background:#1a6ed4;border-color:#1a6ed4;color:#fff;font-weight:500}
+.win-label{font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0}
+
+/* ── CONTROLS ──────────────────────────────────────────────────── */
+.controls{display:flex;gap:6px;flex-wrap:wrap;padding-bottom:.75rem;align-items:center}
+.controls select{font-size:13px;padding:5px 10px;border-radius:var(--radius);height:32px;border:1px solid var(--border2);background:var(--bg);cursor:pointer}
+.collapse-row{display:flex;gap:10px;justify-content:flex-end;padding-bottom:.5rem}
+.collapse-row button{font-size:12px;background:none;border:none;color:var(--text3);cursor:pointer;padding:0}
+.collapse-row button:hover{color:var(--text2)}
+
+/* ── CATEGORY SECTION ──────────────────────────────────────────── */
+.cat-section{margin-bottom:.75rem}
+.cat-header{display:flex;align-items:center;gap:8px;padding:.5rem .6rem;border-radius:var(--radius);cursor:pointer;user-select:none;transition:background .12s}
+.cat-header:hover{background:var(--bg2)}
+.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cat-name{font-size:14px;font-weight:600;color:var(--text)}
+.cat-parent{font-size:12px;color:var(--text3)}
+.cat-count{font-size:11px;color:var(--text3);margin-left:auto}
+.chevron{font-size:14px;color:var(--text3);margin-left:4px;transition:transform .2s;display:flex;align-items:center;flex-shrink:0}
+.chevron.collapsed{transform:rotate(-90deg)}
+.cat-body{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:3000px;opacity:1;margin-top:4px}
+.cat-body.collapsed{max-height:0!important;opacity:0;margin-top:0}
+
+/* ── TASK CARD ─────────────────────────────────────────────────── */
+.task-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.7rem .9rem;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;box-shadow:var(--shadow);transition:opacity .2s}
+.task-card.done{opacity:.4}
+.task-card.done .task-name{text-decoration:line-through;color:var(--text3)}
+.check-btn{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border2);background:transparent;cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.check-btn:hover{border-color:var(--text2)}
+.task-card.done .check-btn{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.task-body{flex:1;min-width:0}
+.task-name{font-size:14px;color:var(--text);line-height:1.4;word-break:break-word}
+.task-meta{display:flex;gap:5px;align-items:center;margin-top:5px;flex-wrap:wrap}
+.badge{font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500;white-space:nowrap}
+.badge.urgent{background:#FCEBEB;color:#A32D2D}
+.badge.high{background:#FAEEDA;color:#854F0B}
+.badge.medium{background:#E6F1FB;color:#185FA5}
+.badge.low{background:#EAF3DE;color:#3B6D11}
+.badge.done-b{background:var(--bg2);color:var(--text3)}
+.badge.recur{background:#EEEDFE;color:#3C3489;display:inline-flex;align-items:center;gap:3px}
+.countdown{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:3px}
+.countdown.red{color:#A32D2D}
+.countdown.amber{color:#854F0B}
+.note-txt{font-size:11px;color:var(--text3);font-style:italic}
+.task-actions{display:flex;gap:2px;margin-left:auto;flex-shrink:0}
+.icon-btn{background:transparent;border:none;cursor:pointer;color:var(--text3);padding:3px 5px;border-radius:6px;font-size:16px;display:flex;align-items:center;transition:all .12s}
+.icon-btn:hover{color:var(--text);background:var(--bg2)}
+
+/* ── EMPTY STATE ───────────────────────────────────────────────── */
+.empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px}
+
+/* ── MODAL ─────────────────────────────────────────────────────── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;padding:0}
+.modal-overlay.open{display:flex}
+@media(min-width:600px){.modal-overlay{align-items:center;padding:1rem}}
+.modal{background:var(--bg);width:100%;max-width:500px;border-radius:16px 16px 0 0;padding:1.25rem 1.25rem 2rem;max-height:92vh;overflow-y:auto;animation:slideUp .2s ease}
+@media(min-width:600px){.modal{border-radius:var(--radius-lg);padding:1.5rem;max-height:85vh}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto .75rem;display:block}
+@media(min-width:600px){.modal-handle{display:none}}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:1rem;color:var(--text)}
+.form-group{margin-bottom:.875rem}
+.form-group label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%;font-size:14px;padding:9px 11px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text);transition:border-color .12s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#1a6ed4}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.recur-box{background:var(--bg2);border-radius:var(--radius);padding:10px 12px;margin-bottom:.875rem;border:1px solid var(--border)}
+.recur-toggle{font-size:13px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:500}
+.recur-toggle input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#1a6ed4}
+.recur-fields{display:none;margin-top:10px;grid-template-columns:1fr 1fr;gap:10px}
+.recur-fields.shown{display:grid}
+.recur-sub{font-size:12px;color:var(--text2);display:block;margin-bottom:3px;font-weight:500}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem}
+
+/* ── SETUP BANNER ──────────────────────────────────────────────── */
+.setup-banner{background:#FFF8E6;border:1px solid #F5C842;border-radius:var(--radius-lg);padding:1rem;margin:1rem 0;font-size:13px;color:#7A5500;line-height:1.6}
+.setup-banner strong{display:block;margin-bottom:4px;font-size:14px}
+.setup-banner a{color:#1a6ed4}
+.setup-banner.hidden{display:none}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="container">
+    <div class="header-inner">
+      <div>
+        <div class="app-title">Task Manager</div>
+      </div>
+      <div class="header-actions">
+        <span class="sync-status" id="sync-status"><i class="ti ti-cloud"></i> <span id="sync-text">Not configured</span></span>
+        <button class="btn primary" onclick="openModal()"><i class="ti ti-plus"></i> Add task</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Setup banner — shown until Script URL is configured -->
+  <div class="setup-banner" id="setup-banner">
+    <strong>⚙️ Sync not yet configured</strong>
+    To sync tasks across your phone and computer, paste your Google Apps Script URL below and click Save.
+    Don't have one yet? Follow the setup guide that came with this file.
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <input id="script-url-input" type="url" placeholder="https://script.google.com/macros/s/..." style="flex:1;min-width:200px;font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid #F5C842;background:#fff;color:#333" />
+      <button class="btn sm" onclick="saveScriptUrl()" style="background:#F5C842;border-color:#F5C842;color:#7A5500;font-weight:600">Save URL</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Active tasks</div><div class="stat-val" id="s-total">0</div></div>
+    <div class="stat"><div class="stat-label">Due today / tomorrow</div><div class="stat-val" id="s-urgent">0</div></div>
+    <div class="stat"><div class="stat-label">Due this week</div><div class="stat-val" id="s-week">0</div></div>
+    <div class="stat"><div class="stat-label">Completed</div><div class="stat-val" id="s-done">0</div></div>
+  </div>
+
+  <div class="window-bar">
+    <span class="win-label"><i class="ti ti-calendar" style="font-size:13px"></i> Due:</span>
+    <button class="win-btn active" data-w="all"     onclick="setWindow('all',this)">All</button>
+    <button class="win-btn"        data-w="0"       onclick="setWindow('0',this)">Today</button>
+    <button class="win-btn"        data-w="1"       onclick="setWindow('1',this)">Tomorrow</button>
+    <button class="win-btn"        data-w="7"       onclick="setWindow('7',this)">This week</button>
+    <button class="win-btn"        data-w="14"      onclick="setWindow('14',this)">Next 2 weeks</button>
+    <button class="win-btn"        data-w="30"      onclick="setWindow('30',this)">This month</button>
+    <button class="win-btn"        data-w="90"      onclick="setWindow('90',this)">Next 3 months</button>
+    <button class="win-btn"        data-w="overdue" onclick="setWindow('overdue',this)">Overdue</button>
+    <button class="win-btn"        data-w="nodue"   onclick="setWindow('nodue',this)">No due date</button>
+  </div>
+
+  <div class="controls">
+    <select id="filter-cat"  onchange="render()"><option value="">All categories</option></select>
+    <select id="filter-pri"  onchange="render()">
+      <option value="">All priorities</option>
+      <option value="urgent">Urgent</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <select id="filter-done" onchange="render()">
+      <option value="active">Hide completed</option>
+      <option value="all">Show all</option>
+      <option value="done">Completed only</option>
+    </select>
+    <select id="sort-by"     onchange="render()">
+      <option value="deadline">Sort by deadline</option>
+      <option value="priority">Sort by priority</option>
+      <option value="name">Sort by name</option>
+    </select>
+  </div>
+
+  <div class="collapse-row">
+    <button onclick="expandAll()"><i class="ti ti-chevrons-down"></i> Expand all</button>
+    <button onclick="collapseAll()"><i class="ti ti-chevrons-up"></i> Collapse all</button>
+  </div>
+
+  <div id="task-list"></div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal">
+    <span class="modal-handle"></span>
+    <h3 id="modal-title">Add task</h3>
+
+    <div class="form-group">
+      <label>Task name</label>
+      <input type="text" id="f-name" placeholder="What needs to get done?" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="f-cat">
+          <optgroup label="Personal">
+            <option value="Chores">Chores</option>
+            <option value="Errands">Errands</option>
+          </optgroup>
+          <optgroup label="Home">
+            <option value="Home Projects">Home Projects</option>
+          </optgroup>
+          <optgroup label="Finance">
+            <option value="Finance">Finance</option>
+          </optgroup>
+          <optgroup label="Healthcare">
+            <option value="Healthcare">Healthcare</option>
+          </optgroup>
+          <optgroup label="Travel">
+            <option value="Travel">Travel</option>
+          </optgroup>
+          <optgroup label="Work">
+            <option value="Admin Tasks">Admin Tasks</option>
+            <option value="Clinical Tasks">Clinical Tasks</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="f-pri-m">
+          <option value="urgent">Urgent</option>
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Due date</label>
+      <input type="date" id="f-due" />
+    </div>
+
+    <div class="recur-box">
+      <label class="recur-toggle">
+        <input type="checkbox" id="f-recur" onchange="toggleRecur()" />
+        Recurring task
+      </label>
+      <div id="recur-fields" class="recur-fields">
+        <div>
+          <span class="recur-sub">Repeat every</span>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="f-rn" min="1" max="365" value="1" style="width:60px;padding:7px 8px" />
+            <select id="f-ru" style="flex:1;padding:7px 8px">
+              <option value="day">day(s)</option>
+              <option value="week" selected>week(s)</option>
+              <option value="month">month(s)</option>
+              <option value="year">year(s)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <span class="recur-sub">End repeat</span>
+          <select id="f-rend" style="width:100%;padding:7px 8px" onchange="toggleEndDate()">
+            <option value="never">Never</option>
+            <option value="on">On date</option>
+            <option value="after">After N times</option>
+          </select>
+        </div>
+        <div id="rend-date-row" style="display:none;grid-column:1/3">
+          <span class="recur-sub">End date</span>
+          <input type="date" id="f-rend-date" style="width:100%;padding:7px 8px" />
+        </div>
+        <div id="rend-count-row" style="display:none;grid-column:1/3">
+          <span class="recur-sub">Repeat how many times?</span>
+          <input type="number" id="f-rend-count" min="1" value="12" style="width:100px;padding:7px 8px" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <textarea id="f-notes" rows="2" placeholder="Any extra details…" style="resize:vertical"></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveTask()">Save task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────
+const STORAGE_KEY   = 'tm_tasks_v5';
+const SCRIPT_URL_KEY= 'tm_script_url';
+const COLLAPSED_KEY = 'tm_collapsed';
+
+// ── CONSTANTS ─────────────────────────────────────────────────────
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+const CAT_META = {
+  'Chores':         {parent:'Personal',   color:'#888780'},
+  'Errands':        {parent:'Personal',   color:'#5F5E5A'},
+  'Home Projects':  {parent:'Home',       color:'#BA7517'},
+  'Finance':        {parent:'Finance',    color:'#1D9E75'},
+  'Healthcare':     {parent:'Healthcare', color:'#D4537E'},
+  'Travel':         {parent:'Travel',     color:'#378ADD'},
+  'Admin Tasks':    {parent:'Work',       color:'#7F77DD'},
+  'Clinical Tasks': {parent:'Work',       color:'#534AB7'},
+};
+const PRI_ORDER = {urgent:0,high:1,medium:2,low:3};
+const catColor  = c => (CAT_META[c]||{color:'#888'}).color;
+const catParent = c => (CAT_META[c]||{parent:''}).parent;
+
+// ── STATE ─────────────────────────────────────────────────────────
+let tasks        = [];
+let editId       = null;
+let activeWindow = 'all';
+let collapsed    = {};
+let scriptUrl    = '';
+let syncPending  = false;
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function daysDiff(ds){
+  if(!ds) return 9999;
+  const d = new Date(ds+'T00:00:00'); d.setHours(0,0,0,0);
+  return Math.round((d-TODAY)/864e5);
+}
+function fmtDate(ds){
+  if(!ds) return '';
+  return new Date(ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function addInterval(ds,n,unit){
+  const d = new Date(ds+'T00:00:00');
+  if(unit==='day')   d.setDate(d.getDate()+n);
+  if(unit==='week')  d.setDate(d.getDate()+n*7);
+  if(unit==='month') d.setMonth(d.getMonth()+n);
+  if(unit==='year')  d.setFullYear(d.getFullYear()+n);
+  return d.toISOString().slice(0,10);
+}
+function recurLabel(t){
+  if(!t.recur) return '';
+  return `Every ${t.recurN} ${t.recurUnit}${t.recurN>1?'s':''}`;
+}
+function uid(){ return Date.now() + Math.random().toString(36).slice(2,7); }
+
+// ── DEFAULT TASKS ─────────────────────────────────────────────────
+const DEFAULTS = [
+  {name:'Finish credentialing paperwork for Aaron',     cat:'Admin Tasks',    pri:'urgent', due:'2026-06-09', notes:'',done:false},
+  {name:'Respond to private practice email',            cat:'Admin Tasks',    pri:'urgent', due:'2026-06-09', notes:'',done:false},
+  {name:'Book hotel for Las Vegas',                     cat:'Travel',         pri:'urgent', due:'2026-06-09', notes:'',done:false},
+  {name:'Find and book Crested Butte lodging',          cat:'Travel',         pri:'urgent', due:'2026-06-22', notes:'Within next 2 weeks',done:false},
+  {name:'Take CE on equity and inclusion',              cat:'Healthcare',     pri:'high',   due:'2026-06-25', notes:'Required before renewing NM psychology license',done:false},
+  {name:'Renew NM psychology license',                  cat:'Healthcare',     pri:'high',   due:'2026-06-30', notes:'CE must be done first',done:false},
+  {name:'Renew Pino pass',                              cat:'Errands',        pri:'high',   due:'2026-06-30', notes:'',done:false},
+  {name:'Make vet appt for cat and dog',                cat:'Healthcare',     pri:'high',   due:'2026-06-30', notes:'',done:false},
+  {name:'Build outdoor planter boxes to hold hoses',   cat:'Home Projects',  pri:'high',   due:'2026-07-08', notes:'Within the next month',done:false},
+  {name:'Plan Crested Butte hikes',                     cat:'Travel',         pri:'medium', due:'2026-07-15', notes:'Before mid-July',done:false},
+  {name:'Move money from TRS to TSP',                   cat:'Finance',        pri:'high',   due:'2026-08-10', notes:'Prior to mid-August',done:false},
+  {name:'Open Robinhood account',                       cat:'Finance',        pri:'medium', due:'',           notes:'',done:false},
+  {name:'Work on financial planning for retirement',    cat:'Finance',        pri:'medium', due:'',           notes:'',done:false},
+  {name:'Catch up on chart notes for private practice', cat:'Clinical Tasks', pri:'high',   due:'',           notes:'',done:false},
+  {name:'Pick up parcel shelf from Tesla',              cat:'Errands',        pri:'low',    due:'',           notes:'',done:false},
+  {name:'Refinish metal front gates',                   cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'This summer',done:false},
+  {name:'Research and decide on composite decking',     cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'This summer',done:false},
+  {name:'Purchase and install composite decking',       cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'This summer; after research decision',done:false},
+  {name:'Redo planters on deck',                        cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'Done alongside decking',done:false},
+];
+
+// ── LOAD / SAVE ───────────────────────────────────────────────────
+function loadLocal(){
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if(s){ tasks = JSON.parse(s); return; }
+  } catch(e){}
+  tasks = DEFAULTS.map(t=>({...t, id:uid(), recur:false, recurN:1, recurUnit:'week', recurEnd:'never', recurEndDate:'', recurEndCount:12, recurCount:0}));
+  saveLocal();
+}
+function saveLocal(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); } catch(e){}
+}
+function loadCollapsed(){
+  try { collapsed = JSON.parse(localStorage.getItem(COLLAPSED_KEY)||'{}'); } catch(e){ collapsed={}; }
+}
+function saveCollapsed(){
+  try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(collapsed)); } catch(e){}
+}
+
+// ── SYNC ──────────────────────────────────────────────────────────
+function setSyncStatus(state, msg){
+  const el = document.getElementById('sync-status');
+  const tx = document.getElementById('sync-text');
+  el.className = 'sync-status ' + state;
+  tx.textContent = msg;
+}
+
+async function syncToSheet(){
+  if(!scriptUrl){ setSyncStatus('','Not configured'); return; }
+  setSyncStatus('syncing','Saving…');
+  try {
+    await fetch(scriptUrl, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'save', tasks})
+    });
+    setSyncStatus('ok','Saved ✓');
+  } catch(e){
+    setSyncStatus('error','Save failed');
+  }
+}
+
+async function syncFromSheet(){
+  if(!scriptUrl){ setSyncStatus('','Not configured'); return; }
+  setSyncStatus('syncing','Syncing…');
+  try {
+    const res = await fetch(scriptUrl + '?action=load', {mode:'cors'});
+    const data = await res.json();
+    if(data && data.tasks && Array.isArray(data.tasks)){
+      tasks = data.tasks;
+      saveLocal();
+      setSyncStatus('ok','Synced ✓');
+      refreshCatFilter();
+      render();
+    } else {
+      setSyncStatus('ok','Up to date ✓');
+    }
+  } catch(e){
+    setSyncStatus('error','Sync failed — using local data');
+  }
+}
+
+function saveScriptUrl(){
+  const val = document.getElementById('script-url-input').value.trim();
+  if(!val){ alert('Please paste your Script URL first.'); return; }
+  scriptUrl = val;
+  localStorage.setItem(SCRIPT_URL_KEY, val);
+  document.getElementById('setup-banner').classList.add('hidden');
+  syncFromSheet();
+}
+
+// ── WINDOW FILTER ─────────────────────────────────────────────────
+function setWindow(w, el){
+  activeWindow = w;
+  document.querySelectorAll('.win-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+function inWindow(t){
+  if(activeWindow==='all')    return true;
+  if(activeWindow==='nodue')  return !t.due;
+  if(!t.due) return false;
+  const d = daysDiff(t.due);
+  if(activeWindow==='overdue') return d<0;
+  if(activeWindow==='0')       return d===0;
+  if(activeWindow==='1')       return d<=1 && d>=0;
+  return d>=0 && d<=parseInt(activeWindow);
+}
+
+// ── COUNTDOWN BADGE ───────────────────────────────────────────────
+function getCountdown(due, done){
+  if(!due||done) return '';
+  const d = daysDiff(due);
+  if(d<0)  return `<span class="countdown red"><i class="ti ti-alert-circle"></i> ${Math.abs(d)}d overdue</span>`;
+  if(d===0)return `<span class="countdown red"><i class="ti ti-clock"></i> Due today</span>`;
+  if(d===1)return `<span class="countdown amber"><i class="ti ti-clock"></i> Due tomorrow</span>`;
+  if(d<=7) return `<span class="countdown amber"><i class="ti ti-clock"></i> ${d}d left</span>`;
+  return `<span class="countdown"><i class="ti ti-calendar"></i> ${fmtDate(due)}</span>`;
+}
+
+// ── COLLAPSE ──────────────────────────────────────────────────────
+function toggleCat(cat){
+  collapsed[cat] = !collapsed[cat];
+  saveCollapsed();
+  const id = 'cb-' + cat.replace(/[^a-zA-Z0-9]/g,'-');
+  const cid= 'ch-' + cat.replace(/[^a-zA-Z0-9]/g,'-');
+  document.getElementById(id)?.classList.toggle('collapsed', collapsed[cat]);
+  document.getElementById(cid)?.classList.toggle('collapsed', collapsed[cat]);
+}
+function expandAll(){
+  Object.keys(collapsed).forEach(c=>{ collapsed[c]=false; });
+  saveCollapsed();
+  document.querySelectorAll('.cat-body').forEach(el=>el.classList.remove('collapsed'));
+  document.querySelectorAll('.chevron').forEach(el=>el.classList.remove('collapsed'));
+}
+function collapseAll(){
+  document.querySelectorAll('.cat-body').forEach(el=>{
+    el.classList.add('collapsed');
+    const cat = el.dataset.cat;
+    if(cat) collapsed[cat]=true;
+  });
+  saveCollapsed();
+  document.querySelectorAll('.chevron').forEach(el=>el.classList.add('collapsed'));
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function render(){
+  const fCat  = document.getElementById('filter-cat').value;
+  const fPri  = document.getElementById('filter-pri').value;
+  const fDone = document.getElementById('filter-done').value;
+  const sBy   = document.getElementById('sort-by').value;
+
+  let vis = tasks.filter(t=>{
+    if(!inWindow(t)) return false;
+    if(fCat && t.cat!==fCat) return false;
+    if(fPri && t.pri!==fPri) return false;
+    if(fDone==='active' && t.done) return false;
+    if(fDone==='done'   && !t.done) return false;
+    return true;
+  });
+
+  vis.sort((a,b)=>{
+    if(sBy==='priority') return PRI_ORDER[a.pri]-PRI_ORDER[b.pri] || (a.due||'z').localeCompare(b.due||'z');
+    if(sBy==='name')     return a.name.localeCompare(b.name);
+    return (a.due||'9999').localeCompare(b.due||'9999') || PRI_ORDER[a.pri]-PRI_ORDER[b.pri];
+  });
+
+  const cats = [...new Set(vis.map(t=>t.cat))].sort((a,b)=>{
+    const pa=catParent(a), pb=catParent(b);
+    return pa!==pb ? pa.localeCompare(pb) : a.localeCompare(b);
+  });
+
+  const container = document.getElementById('task-list');
+  if(!vis.length){
+    container.innerHTML='<div class="empty"><i class="ti ti-check" style="font-size:28px;display:block;margin-bottom:8px"></i>No tasks here</div>';
+    updateStats(); return;
+  }
+
+  let html='';
+  cats.forEach(cat=>{
+    const catTasks = vis.filter(t=>t.cat===cat);
+    const color    = catColor(cat);
+    const parent   = catParent(cat);
+    const isCol    = !!collapsed[cat];
+    const sid      = 'cb-'+cat.replace(/[^a-zA-Z0-9]/g,'-');
+    const cid      = 'ch-'+cat.replace(/[^a-zA-Z0-9]/g,'-');
+    const esc      = cat.replace(/'/g,"\\'");
+
+    html += `<div class="cat-section">
+      <div class="cat-header" onclick="toggleCat('${esc}')">
+        <div class="cat-dot" style="background:${color}"></div>
+        <span class="cat-name">${cat}</span>
+        ${parent ? `<span class="cat-parent">/ ${parent}</span>` : ''}
+        <span class="cat-count">${catTasks.filter(t=>!t.done).length} active · ${catTasks.length} total</span>
+        <span class="chevron${isCol?' collapsed':''}" id="${cid}"><i class="ti ti-chevron-down"></i></span>
+      </div>
+      <div class="cat-body${isCol?' collapsed':''}" id="${sid}" data-cat="${cat}">`;
+
+    catTasks.forEach(t=>{
+      const rl = recurLabel(t);
+      const priMap = {urgent:'Urgent',high:'High',medium:'Medium',low:'Low'};
+      html += `<div class="task-card${t.done?' done':''}" id="tc-${t.id}">
+        <button class="check-btn" onclick="toggleDone('${t.id}')" aria-label="${t.done?'Mark incomplete':'Mark complete'}">
+          ${t.done ? '<i class="ti ti-check" style="font-size:12px;color:#fff"></i>' : ''}
+        </button>
+        <div class="task-body">
+          <div class="task-name">${t.name}</div>
+          <div class="task-meta">
+            <span class="badge ${t.done?'done-b':t.pri}">${priMap[t.pri]||t.pri}</span>
+            ${rl ? `<span class="badge recur"><i class="ti ti-refresh" style="font-size:10px"></i>${rl}</span>` : ''}
+            ${getCountdown(t.due, t.done)}
+            ${t.notes ? `<span class="note-txt">${t.notes}</span>` : ''}
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn" onclick="editTask('${t.id}')" aria-label="Edit"><i class="ti ti-edit"></i></button>
+          <button class="icon-btn" onclick="deleteTask('${t.id}')" aria-label="Delete"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+  updateStats();
+}
+
+function updateStats(){
+  const active = tasks.filter(t=>!t.done);
+  document.getElementById('s-total').textContent  = active.length;
+  document.getElementById('s-done').textContent   = tasks.filter(t=>t.done).length;
+  document.getElementById('s-urgent').textContent = active.filter(t=>t.due && daysDiff(t.due)<=1).length;
+  document.getElementById('s-week').textContent   = active.filter(t=>{
+    if(!t.due) return false; const d=daysDiff(t.due); return d>=0&&d<=7;
+  }).length;
+}
+
+function refreshCatFilter(){
+  const sel = document.getElementById('filter-cat');
+  const cur = sel.value;
+  const cats = [...new Set(tasks.map(t=>t.cat))].sort((a,b)=>{
+    const pa=catParent(a), pb=catParent(b);
+    return pa!==pb ? pa.localeCompare(pb) : a.localeCompare(b);
+  });
+  sel.innerHTML = '<option value="">All categories</option>';
+  let lastP='';
+  cats.forEach(c=>{
+    const p=catParent(c);
+    if(p && p!==lastP){ sel.innerHTML+=`<optgroup label="${p}">`; lastP=p; }
+    sel.innerHTML += `<option value="${c}"${c===cur?' selected':''}>${c}</option>`;
+  });
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────
+function toggleDone(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  if(t.recur && !t.done){
+    const nextDue = addInterval(t.due||new Date().toISOString().slice(0,10), t.recurN, t.recurUnit);
+    t.recurCount = (t.recurCount||0)+1;
+    let can = true;
+    if(t.recurEnd==='after' && t.recurCount>=t.recurEndCount) can=false;
+    if(t.recurEnd==='on'    && t.recurEndDate && nextDue>t.recurEndDate) can=false;
+    if(can) tasks.push({...t, id:uid(), due:nextDue, done:false, recurCount:t.recurCount});
+    t.done = true;
+  } else {
+    t.done = !t.done;
+  }
+  saveLocal();
+  syncToSheet();
+  render();
+}
+
+function deleteTask(id){
+  if(!confirm('Delete this task?')) return;
+  tasks = tasks.filter(t=>t.id!==id);
+  saveLocal();
+  syncToSheet();
+  refreshCatFilter();
+  render();
+}
+
+function editTask(id){ openModal(id); }
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function openModal(id=null){
+  editId = id;
+  const t = id ? tasks.find(x=>x.id===id) : null;
+  document.getElementById('modal-title').textContent = id ? 'Edit task' : 'Add task';
+  document.getElementById('f-name').value  = t ? t.name  : '';
+  document.getElementById('f-cat').value   = t ? t.cat   : 'Admin Tasks';
+  document.getElementById('f-pri-m').value = t ? t.pri   : 'medium';
+  document.getElementById('f-due').value   = t ? t.due   : '';
+  document.getElementById('f-notes').value = t ? t.notes : '';
+  const recur = t && t.recur;
+  document.getElementById('f-recur').checked     = !!recur;
+  document.getElementById('f-rn').value           = t&&t.recurN    ? t.recurN    : 1;
+  document.getElementById('f-ru').value           = t&&t.recurUnit ? t.recurUnit : 'week';
+  document.getElementById('f-rend').value         = t&&t.recurEnd  ? t.recurEnd  : 'never';
+  document.getElementById('f-rend-date').value    = t&&t.recurEndDate  ? t.recurEndDate  : '';
+  document.getElementById('f-rend-count').value   = t&&t.recurEndCount ? t.recurEndCount : 12;
+  document.getElementById('recur-fields').className = 'recur-fields'+(recur?' shown':'');
+  document.getElementById('rend-date-row').style.display  = (recur&&t.recurEnd==='on')    ? 'block' : 'none';
+  document.getElementById('rend-count-row').style.display = (recur&&t.recurEnd==='after') ? 'block' : 'none';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(), 100);
+}
+
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+function overlayClick(e){ if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+function toggleRecur(){
+  const on = document.getElementById('f-recur').checked;
+  document.getElementById('recur-fields').className = 'recur-fields'+(on?' shown':'');
+  if(!on){
+    document.getElementById('rend-date-row').style.display  = 'none';
+    document.getElementById('rend-count-row').style.display = 'none';
+  }
+}
+function toggleEndDate(){
+  const v = document.getElementById('f-rend').value;
+  document.getElementById('rend-date-row').style.display  = v==='on'    ? 'block' : 'none';
+  document.getElementById('rend-count-row').style.display = v==='after' ? 'block' : 'none';
+}
+
+function saveTask(){
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){ document.getElementById('f-name').focus(); return; }
+  const recur = document.getElementById('f-recur').checked;
+  const obj = {
+    name, cat:document.getElementById('f-cat').value, pri:document.getElementById('f-pri-m').value,
+    due:document.getElementById('f-due').value, notes:document.getElementById('f-notes').value.trim(),
+    recur, recurN:parseInt(document.getElementById('f-rn').value)||1,
+    recurUnit:document.getElementById('f-ru').value, recurEnd:document.getElementById('f-rend').value,
+    recurEndDate:document.getElementById('f-rend-date').value,
+    recurEndCount:parseInt(document.getElementById('f-rend-count').value)||12,
+    recurCount:0, done:false
+  };
+  if(editId){ const t=tasks.find(x=>x.id===editId); if(t) Object.assign(t,obj); }
+  else { tasks.push({id:uid(), ...obj}); }
+  saveLocal();
+  syncToSheet();
+  closeModal();
+  refreshCatFilter();
+  render();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+(function init(){
+  loadLocal();
+  loadCollapsed();
+
+  // Restore script URL
+  scriptUrl = localStorage.getItem(SCRIPT_URL_KEY)||'';
+  if(scriptUrl){
+    document.getElementById('setup-banner').classList.add('hidden');
+    syncFromSheet();
+  }
+
+  refreshCatFilter();
+  render();
+
+  // Auto-sync from sheet on page focus (e.g. switching tabs / returning from phone)
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState==='visible' && scriptUrl) syncFromSheet();
+  });
+})();
+</script>
+</body>
+</html>
