@@ -266,8 +266,8 @@ input,select,textarea,button{font-family:inherit;color:inherit}
             <option value="Travel">Travel</option>
           </optgroup>
           <optgroup label="Work">
-            <option value="Admin Tasks">Admin Tasks</option>
-            <option value="Clinical Tasks">Clinical Tasks</option>
+            <option value="Admin">Admin</option>
+            <option value="Clinical">Clinical</option>
           </optgroup>
         </select>
       </div>
@@ -352,8 +352,8 @@ const CAT_META = {
   'Finance':        {parent:'Finance',    color:'#1D9E75'},
   'Healthcare':     {parent:'Healthcare', color:'#D4537E'},
   'Travel':         {parent:'Travel',     color:'#378ADD'},
-  'Admin Tasks':    {parent:'Work',       color:'#7F77DD'},
-  'Clinical Tasks': {parent:'Work',       color:'#534AB7'},
+  'Admin':          {parent:'Work',       color:'#7F77DD'},
+  'Clinical':       {parent:'Work',       color:'#534AB7'},
 };
 const PRI_ORDER = {urgent:0,high:1,medium:2,low:3};
 const catColor  = c => (CAT_META[c]||{color:'#888'}).color;
@@ -429,8 +429,8 @@ function uid(){ return Date.now() + Math.random().toString(36).slice(2,7); }
 
 // ── DEFAULT TASKS ─────────────────────────────────────────────────
 const DEFAULTS = [
-  {name:'Finish credentialing paperwork for Aaron',     cat:'Admin Tasks',    pri:'urgent', due:'2026-06-09', notes:'',done:false},
-  {name:'Respond to private practice email',            cat:'Admin Tasks',    pri:'urgent', due:'2026-06-09', notes:'',done:false},
+  {name:'Finish credentialing paperwork for Aaron',     cat:'Admin',          pri:'urgent', due:'2026-06-09', notes:'',done:false},
+  {name:'Respond to private practice email',            cat:'Admin',          pri:'urgent', due:'2026-06-09', notes:'',done:false},
   {name:'Book hotel for Las Vegas',                     cat:'Travel',         pri:'urgent', due:'2026-06-09', notes:'',done:false},
   {name:'Find and book Crested Butte lodging',          cat:'Travel',         pri:'urgent', due:'2026-06-22', notes:'Within next 2 weeks',done:false},
   {name:'Take CE on equity and inclusion',              cat:'Healthcare',     pri:'high',   due:'2026-06-25', notes:'Required before renewing NM psychology license',done:false},
@@ -442,7 +442,7 @@ const DEFAULTS = [
   {name:'Move money from TRS to TSP',                   cat:'Finance',        pri:'high',   due:'2026-08-10', notes:'Prior to mid-August',done:false},
   {name:'Open Robinhood account',                       cat:'Finance',        pri:'medium', due:'',           notes:'',done:false},
   {name:'Work on financial planning for retirement',    cat:'Finance',        pri:'medium', due:'',           notes:'',done:false},
-  {name:'Catch up on chart notes for private practice', cat:'Clinical Tasks', pri:'high',   due:'',           notes:'',done:false},
+  {name:'Catch up on chart notes for private practice', cat:'Clinical',       pri:'high',   due:'',           notes:'',done:false},
   {name:'Pick up parcel shelf from Tesla',              cat:'Tasks',          pri:'low',    due:'',           notes:'',done:false},
   {name:'Refinish metal front gates',                   cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'This summer',done:false},
   {name:'Research and decide on composite decking',     cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'This summer',done:false},
@@ -720,7 +720,7 @@ function openModal(id=null){
   const t = id ? tasks.find(x=>x.id===id) : null;
   document.getElementById('modal-title').textContent = id ? 'Edit task' : 'Add task';
   document.getElementById('f-name').value  = t ? t.name  : '';
-  document.getElementById('f-cat').value   = t ? t.cat   : 'Admin Tasks';
+  document.getElementById('f-cat').value   = t ? t.cat   : 'Admin';
   document.getElementById('f-pri-m').value = t ? t.pri   : 'medium';
   document.getElementById('f-due').value   = t ? t.due   : '';
   document.getElementById('f-notes').value = t ? t.notes : '';
