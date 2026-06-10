@@ -251,7 +251,7 @@ input,select,textarea,button{font-family:inherit;color:inherit}
         <select id="f-cat">
           <optgroup label="Personal">
             <option value="Chores">Chores</option>
-            <option value="Errands">Errands</option>
+            <option value="Tasks">Tasks</option>
           </optgroup>
           <optgroup label="Home">
             <option value="Home Projects">Home Projects</option>
@@ -347,7 +347,7 @@ const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 
 const CAT_META = {
   'Chores':         {parent:'Personal',   color:'#888780'},
-  'Errands':        {parent:'Personal',   color:'#5F5E5A'},
+  'Tasks':          {parent:'Personal',   color:'#5F5E5A'},
   'Home Projects':  {parent:'Home',       color:'#BA7517'},
   'Finance':        {parent:'Finance',    color:'#1D9E75'},
   'Healthcare':     {parent:'Healthcare', color:'#D4537E'},
@@ -435,7 +435,7 @@ const DEFAULTS = [
   {name:'Find and book Crested Butte lodging',          cat:'Travel',         pri:'urgent', due:'2026-06-22', notes:'Within next 2 weeks',done:false},
   {name:'Take CE on equity and inclusion',              cat:'Healthcare',     pri:'high',   due:'2026-06-25', notes:'Required before renewing NM psychology license',done:false},
   {name:'Renew NM psychology license',                  cat:'Healthcare',     pri:'high',   due:'2026-06-30', notes:'CE must be done first',done:false},
-  {name:'Renew Pino pass',                              cat:'Errands',        pri:'high',   due:'2026-06-30', notes:'',done:false},
+  {name:'Renew Pino pass',                              cat:'Tasks',          pri:'high',   due:'2026-06-30', notes:'',done:false},
   {name:'Make vet appt for cat and dog',                cat:'Healthcare',     pri:'high',   due:'2026-06-30', notes:'',done:false},
   {name:'Build outdoor planter boxes to hold hoses',   cat:'Home Projects',  pri:'high',   due:'2026-07-08', notes:'Within the next month',done:false},
   {name:'Plan Crested Butte hikes',                     cat:'Travel',         pri:'medium', due:'2026-07-15', notes:'Before mid-July',done:false},
@@ -443,7 +443,7 @@ const DEFAULTS = [
   {name:'Open Robinhood account',                       cat:'Finance',        pri:'medium', due:'',           notes:'',done:false},
   {name:'Work on financial planning for retirement',    cat:'Finance',        pri:'medium', due:'',           notes:'',done:false},
   {name:'Catch up on chart notes for private practice', cat:'Clinical Tasks', pri:'high',   due:'',           notes:'',done:false},
-  {name:'Pick up parcel shelf from Tesla',              cat:'Errands',        pri:'low',    due:'',           notes:'',done:false},
+  {name:'Pick up parcel shelf from Tesla',              cat:'Tasks',          pri:'low',    due:'',           notes:'',done:false},
   {name:'Refinish metal front gates',                   cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'This summer',done:false},
   {name:'Research and decide on composite decking',     cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'This summer',done:false},
   {name:'Purchase and install composite decking',       cat:'Home Projects',  pri:'medium', due:'2026-09-01', notes:'This summer; after research decision',done:false},
