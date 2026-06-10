@@ -368,22 +368,58 @@ let scriptUrl    = '';
 let syncPending  = false;
 
 // ── HELPERS ───────────────────────────────────────────────────────
+// Parse any date value safely into [year, month-1, day] then build a LOCAL date.
+// Handles: "2026-06-15", "2026-06-15T00:00:00", JS Date objects, Sheet serial numbers.
+function parseLocalDate(ds){
+  if(!ds && ds !== 0) return null;
+  // Already a Date object
+  if(ds instanceof Date){ return isNaN(ds)?null:new Date(ds.getFullYear(),ds.getMonth(),ds.getDate()); }
+  // Google Sheets serial number (number of days since 1899-12-30)
+  if(typeof ds === 'number'){
+    const epoch = new Date(1899,11,30);
+    epoch.setDate(epoch.getDate()+ds);
+    return new Date(epoch.getFullYear(),epoch.getMonth(),epoch.getDate());
+  }
+  const s = String(ds).trim();
+  if(!s) return null;
+  // ISO-like "YYYY-MM-DD" (with optional time portion) — split to avoid UTC shift
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso) return new Date(+iso[1], +iso[2]-1, +iso[3]);
+  // Fallback: try native parse but zero the time so it stays in local zone
+  const d = new Date(s);
+  if(isNaN(d)) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function normalizeDue(ds){
+  // Always store/return as "YYYY-MM-DD" string; returns "" for bad input
+  const d = parseLocalDate(ds);
+  if(!d) return '';
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 function daysDiff(ds){
-  if(!ds) return 9999;
-  const d = new Date(ds+'T00:00:00'); d.setHours(0,0,0,0);
+  if(!ds && ds !== 0) return 9999;
+  const d = parseLocalDate(ds);
+  if(!d) return 9999;
+  d.setHours(0,0,0,0);
   return Math.round((d-TODAY)/864e5);
 }
 function fmtDate(ds){
-  if(!ds) return '';
-  return new Date(ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  if(!ds && ds !== 0) return '';
+  const d = parseLocalDate(ds);
+  if(!d) return '';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 }
 function addInterval(ds,n,unit){
-  const d = new Date(ds+'T00:00:00');
+  const d = parseLocalDate(ds) || new Date(TODAY);
   if(unit==='day')   d.setDate(d.getDate()+n);
   if(unit==='week')  d.setDate(d.getDate()+n*7);
   if(unit==='month') d.setMonth(d.getMonth()+n);
   if(unit==='year')  d.setFullYear(d.getFullYear()+n);
-  return d.toISOString().slice(0,10);
+  return normalizeDue(d);
 }
 function recurLabel(t){
   if(!t.recur) return '';
@@ -464,7 +500,7 @@ async function syncFromSheet(){
     const res = await fetch(scriptUrl + '?action=load', {mode:'cors'});
     const data = await res.json();
     if(data && data.tasks && Array.isArray(data.tasks)){
-      tasks = data.tasks;
+      tasks = data.tasks.map(t=>({...t, due:normalizeDue(t.due||'')}));
       saveLocal();
       setSyncStatus('ok','Synced ✓');
       refreshCatFilter();
@@ -725,7 +761,7 @@ function saveTask(){
   const recur = document.getElementById('f-recur').checked;
   const obj = {
     name, cat:document.getElementById('f-cat').value, pri:document.getElementById('f-pri-m').value,
-    due:document.getElementById('f-due').value, notes:document.getElementById('f-notes').value.trim(),
+    due:normalizeDue(document.getElementById('f-due').value), notes:document.getElementById('f-notes').value.trim(),
     recur, recurN:parseInt(document.getElementById('f-rn').value)||1,
     recurUnit:document.getElementById('f-ru').value, recurEnd:document.getElementById('f-rend').value,
     recurEndDate:document.getElementById('f-rend-date').value,
